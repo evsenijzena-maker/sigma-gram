@@ -1,0 +1,49 @@
+name: Build SigmaGram (Windows)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ dev ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Bootstrap vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: 2023.10.19
+
+      - name: Install Qt6 dependencies
+        run: |
+          vcpkg install qt6-base:x64-windows
+          vcpkg install qt6-declarative:x64-windows
+          vcpkg install qt6-svg:x64-windows
+        shell: pwsh
+
+      - name: Generate build files
+        run: |
+          cmake -B build -S . -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="%VCPKG_ROOT%/installed/x64-windows" -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%/scripts/buildsystems/vcpkg.cmake"
+        shell: cmd
+
+      - name: Build SigmaGram
+        run: cmake --build build --config Release --target Telegram
+        shell: cmd
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: sigma-gram-windows
+          path: build/SourceFiles/Release/SigmaGram.exe
+          if-no-files-found: error
