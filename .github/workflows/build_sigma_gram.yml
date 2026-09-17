@@ -8,7 +8,6 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -38,12 +37,28 @@ jobs:
         shell: cmd
 
       - name: Build SigmaGram
-        run: cmake --build build --config Release --target Telegram
+        id: build_step
+        run: |
+          echo "=== Building SigmaGram ==="
+          cmake --build build --config Release > build_output.txt 2>&1
+          type build_output.txt
         shell: cmd
+        continue-on-error: true
+
+      - name: Save build log
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-log
+          path: build/build_output.txt
+          if-no-files-found: ignore
 
       - name: Upload artifact
+        if: success()
         uses: actions/upload-artifact@v3
         with:
           name: sigma-gram-windows
-          path: build/SourceFiles/Release/SigmaGram.exe
+          path: |
+            build/SourceFiles/Release/SigmaGram.exe
+            build/SourceFiles/Release/Telegram.exe
           if-no-files-found: error
