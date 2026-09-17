@@ -1,0 +1,13 @@
+name: Build SigmaGram (Windows)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ dev ]
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - name: Say hello
+        run: echo Hello from SigmaGram CI
